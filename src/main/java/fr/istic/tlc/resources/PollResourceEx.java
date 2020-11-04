@@ -4,6 +4,7 @@ import static fr.istic.tlc.services.Utils.generateSlug;
 
 import java.util.List;
 
+import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -33,11 +34,13 @@ public class PollResourceEx {
 	PollRepository pollRepository;
 
 	@ConfigProperty(name = "doodle.usepad")
-	boolean usePad = false;
-	@ConfigProperty(name = "doodle.padUrl")
-	String padUrl = "http://etherpad:9001/";
+	boolean usePad = true;
+	@ConfigProperty(name = "doodle.internalPadUrl", defaultValue="http://etherpad:9001/")
+	String padUrl = "";
+	@ConfigProperty(name = "doodle.externalPadUrl", defaultValue="http://etherpad.diverse-team.fr/")
+	String externalPadUrl = "";
 	@ConfigProperty(name = "doodle.padApiKey")
-	String apikey = "fa8cce291d03acaf1dce7d137f73ce60aa2eeebdec77be42bcb8461d0e4278ea";
+	String apikey = "";
 	EPLiteClient client;
 
 	@GetMapping("/polls")
@@ -73,6 +76,7 @@ public class PollResourceEx {
 	}
 
 	@DeleteMapping("/polls/{slug}")
+	@Transactional
 	public ResponseEntity<Poll> deletePoll(@PathVariable("slug") String slug, @RequestParam String token) {
 		// On vérifie que le poll existe
 		Poll poll = pollRepository.findBySlug(slug);
@@ -100,23 +104,32 @@ public class PollResourceEx {
 		return new ResponseEntity<>(poll, HttpStatus.OK);
 	}
 
+
+	
 	@PostMapping("/polls")
+	@Transactional
 	public ResponseEntity<Poll> createPoll(@Valid @RequestBody Poll poll) {
 		// On enregistre le poll dans la bdd
 		String padId = generateSlug(6);
-		if (usePad) {
+		System.err.println(this.apikey);
+		if (this.usePad) {
+			System.err.println("Pass par use pad");
 			if (client == null) {
 				client = new EPLiteClient(padUrl, apikey);
 			}
 			client.createPad(padId);
 			initPad(poll.getTitle(), poll.getLocation(), poll.getDescription(), client, padId);
-			poll.setPadURL(padUrl + "p/" + padId);
+			poll.setPadURL(externalPadUrl + "p/" + padId);
+		} else {
+			System.err.println("Pass pas par use pad");
+
 		}
 		pollRepository.persist(poll);
 		return new ResponseEntity<>(poll, HttpStatus.CREATED);
 	}
 
 	@PutMapping("/polls/{slug}")
+	@Transactional
 	public ResponseEntity<Object> updatePoll(@Valid @RequestBody Poll poll, @PathVariable String slug,
 			@RequestParam String token) {
 		// On vérifie que le poll existe

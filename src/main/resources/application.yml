@@ -1,6 +1,7 @@
 doodle:
-  usepad: false
-  padUrl: "http://etherpad:9001/"
+  usepad: true
+  internalPadUrl: "http://localhost:9001/"
+  externalPadUrl: "http://localhost:9001/"
   padApiKey: "fa8cce291d03acaf1dce7d137f73ce60aa2eeebdec77be42bcb8461d0e4278ea"
   organizermail: "olivier.barais@gmail.com"
   tmpfolder: "/tmp/excelFiles"
